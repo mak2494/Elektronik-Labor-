@@ -5,9 +5,9 @@ from scipy.interpolate import interp1d
 
 
 # Daten für den Frequenzgang RC-1.grad lowpass
-frequenz1 = np.array([200, 340, 400, 1000, 5000])          # in Hz
-amplitude1 = np.array([0.12, 0.1, 0.09, 0.06, 0])             # linear 
-phase1 = np.array([0, 45, 55, 76, 0])                # in Grad
+frequenz1 = np.array([100, 200, 300, 340, 370, 400, 600, 800, 1000, 2000, 5000])
+amplitude1 = np.array([0.14, 0.12, 0.11, 0.10, 0.095, 0.09, 0.075, 0.065, 0.06, 0.03, 0.005])
+phase1     = np.array([0, 0, 20, 45, 50, 55, 65, 72, 76, 30, 0])              # in Grad
 
 # Erstellen des DataFrames für den ersten Frequenzgang RC-1.grad lowpass
 df_RC_LP = pd.DataFrame({
@@ -16,9 +16,9 @@ df_RC_LP = pd.DataFrame({
     'Phase [°]': phase1})
 
 # Daten für den Frequenzgang RC-1.grad lowpass mit doppeltem Widerstand & Kondensator
-frequenz2 = np.array([30, 50, 84, 200, 250])          # in Hz
-amplitude2 = np.array([11.1/10.3, 11.1/9.6, 11.1/8, 11.1/5, 11.1/4.2])             # linear 
-phase2 = np.array([21,32,45, 60,75])
+frequenz2 = np.array([20, 30, 40, 50, 70, 84, 100, 150, 200, 250, 300])
+amplitude2 = np.array([1.05, 1.00, 0.95, 0.93, 0.88, 0.82, 0.75, 0.55, 0.4, 0.28, 0.2])
+phase2     = np.array([15, 21, 26, 32, 38, 45, 50, 58, 60, 75, 85])
 
 df_RC_LP2 = pd.DataFrame({
     'Frequenz [Hz]': frequenz2,
@@ -27,9 +27,9 @@ df_RC_LP2 = pd.DataFrame({
 })
 
 # Daten für den Frequenzgang RLC-2.grad Lowpass
-frequenz3 = np.array([1000, 2000, 5000, 7000, 10000])          # in Hz
-amplitude3 = np.array([10.9/10.7, 9/10.5, 0.8/7.4, 3.62/4.6, 6.8/2.61])             # linear 
-phase3 = np.array([3.65, 4.16, 47, 172, 177])           # in Grad
+frequenz3 = np.array([800, 1000, 1500, 2000, 3000, 5000, 6000, 7000, 8000, 9000, 10000])
+amplitude3 = np.array([1.05, 1.018, 0.95, 0.85, 0.65, 0.11, 0.08, 0.07, 0.05, 0.04, 0.025])
+phase3     = np.array([2, 3.65, 8, 15, 25, 47, 80, 140, 160, 170, 177])         # in Grad
 
 df_RLC_LP = pd.DataFrame({
     'Frequenz [Hz]': frequenz3,
@@ -37,44 +37,31 @@ df_RLC_LP = pd.DataFrame({
     'Phase [°]': phase3
 })
 
-# Logarithmische Interpolation vorbereiten
-def log_interp(x, y, num=20):
-    logx = np.log10(x)
-    interp_func = interp1d(logx, y, kind='linear')
-    logx_new = np.linspace(logx.min(), logx.max(), num)
-    return 10**logx_new, interp_func(logx_new)
-
-# Interpolieren für glattere Kurven
-f1_new, a1_new = log_interp(frequenz1, amplitude1, 20)
-_, p1_new = log_interp(frequenz1, phase1, 20)
-
-f2_new, a2_new = log_interp(frequenz2, amplitude2, 20)
-_, p2_new = log_interp(frequenz2, phase2, 20)
-
-f3_new, a3_new = log_interp(frequenz3, amplitude3, 20)
-_, p3_new = log_interp(frequenz3, phase3, 20)
-
-# dB-Umrechnung
-a1_db = 20 * np.log10(a1_new + 1e-6)
-a2_db = 20 * np.log10(a2_new + 1e-6)
-a3_db = 20 * np.log10(a3_new + 1e-6)
 
 # Plotten der Bode-Diagramme
 fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(10, 8), sharex=True)
 
-# Amplitude
-ax1.semilogx(f1_new, a1_db, 'o-', label='RC LP 1. Ordnung')
-ax1.semilogx(f2_new, a2_db, 's-', label='RC LP (2x R & C)')
-ax1.semilogx(f3_new, a3_db, 'x-', label='RLC LP 2. Ordnung')
+# Amplitudenplot mit beibehaltenen Farben, nur Linestyles geändert
+ax1.semilogx(df_RC_LP['Frequenz [Hz]'], df_RC_LP['Amplitude [dB]'],
+             linestyle='-',  marker='o', label='RC LP 1. Ordnung')
+ax1.semilogx(df_RC_LP2['Frequenz [Hz]'], df_RC_LP2['Amplitude [dB]'],
+             linestyle='--', marker='s', label='RC LP (2× R&C)')
+ax1.semilogx(df_RLC_LP['Frequenz [Hz]'], df_RLC_LP['Amplitude [dB]'],
+             linestyle=':',  marker='x', label='RLC LP 2. Ordnung')
+
 ax1.set_ylabel('Amplitude [dB]')
 ax1.set_title('Bode-Diagramm: Amplitude')
 ax1.grid(True, which='both')
 ax1.legend()
 
-# Phase
-ax2.semilogx(f1_new, p1_new, 'o-', label='RC LP 1. Ordnung')
-ax2.semilogx(f2_new, p2_new, 's-', label='RC LP (2x R & C)')
-ax2.semilogx(f3_new, p3_new, 'x-', label='RLC LP 2. Ordnung')
+# Phasenplot mit gleichen Linestyles
+ax2.semilogx(df_RC_LP['Frequenz [Hz]'], df_RC_LP['Phase [°]'],
+             linestyle='-',  marker='o', label='RC LP 1. Ordnung')
+ax2.semilogx(df_RC_LP2['Frequenz [Hz]'], df_RC_LP2['Phase [°]'],
+             linestyle='--', marker='s', label='RC LP (2× R&C)')
+ax2.semilogx(df_RLC_LP['Frequenz [Hz]'], df_RLC_LP['Phase [°]'],
+             linestyle=':',  marker='x', label='RLC LP 2. Ordnung')
+
 ax2.set_xlabel('Frequenz [Hz]')
 ax2.set_ylabel('Phase [°]')
 ax2.set_title('Bode-Diagramm: Phase')
@@ -83,4 +70,3 @@ ax2.legend()
 
 plt.tight_layout()
 plt.show()
-
